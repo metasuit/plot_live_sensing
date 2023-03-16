@@ -19,7 +19,7 @@ def write_sine_data(file):
 
     while True:
         # Calculate the values of the sine waves
-        values = [math.sin(i * angle_incr + t) for i in range(num_waves)]
+        values = [2*math.sin(i * angle_incr + t) for i in range(num_waves)]
 
         # Write the values to the file
         file.seek(0) # Move the file pointer to the beginning of the file
