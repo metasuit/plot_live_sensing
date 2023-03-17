@@ -1,12 +1,16 @@
+import tkinter
+
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from tkinter import *
+from tkinter import ttk
 import threading
 import time
 import numpy as np
 from scipy.signal import medfilt
 
 stop_event = threading.Event()
+data_processed = [0.0] * 8
 BUFFER_SIZE = 20
 buffer = [[] for _ in range(8)]
 window_size = 5 #default window size
@@ -26,6 +30,9 @@ def moving_average_filter(data, windowsize):
     #solution cumsum
     cumsum_data = np.cumsum(np.insert(data, 0, 0))
     return (cumsum_data[windowsize:] - cumsum_data[:-windowsize]) / float(windowsize)
+
+def moving_median_filter(data, windowsize):
+    return medfilt(data, windowsize)
 
 
 # Define a function to continuously update the plot with new data
@@ -60,12 +67,21 @@ def update_plot():
 
             # Update the plot with the new data
             for i in range(8):
-                if moving_avg_var.get() == 1 and window_size_entry.get().isdigit():
+                if filter_type_var.get() == "Moving Average" and window_size_entry.get().isdigit():
                     window_size1 = int(window_size_entry.get())
                     filtered_data = moving_average_filter(buffer[i], window_size1)
                     lines[i].set_data(list(range(len(filtered_data))), filtered_data)
+                    data_processed[i] = filtered_data
+                elif filter_type_var.get() == "Moving Median" and window_size_entry.get().isdigit():
+                    window_size1 = int(window_size_entry.get())
+                    if window_size1 % 2 == 0:
+                        window_size1 += 1
+                    filtered_data = moving_median_filter(buffer[i], window_size1)
+                    lines[i].set_data(list(range(len(filtered_data))), filtered_data)
+                    data_processed[i] = filtered_data
                 else:
                     lines[i].set_data(list(range(len(buffer[i]))), buffer[i])
+                    data_processed[i] = new_data[i]
 
             # Add labels to the x and y axes
             ax.set_xlabel('Time')
@@ -77,8 +93,9 @@ def update_plot():
 
             # Save the data if the save flag is on
             if save_flag:
-                with open('saved_data.txt', 'a') as f:
-                    f.write(','.join([str(d) for d in new_data]) + '\n')
+                filename = filename_entry.get()
+                with open(filename, 'a') as f:
+                    f.write(','.join([str(d) for d in data_processed]) + '\n')
             prev_first_value = new_data[0]
         # Wait for a short time before checking for changes again
         time.sleep(0.001)
@@ -128,6 +145,13 @@ stop_button.pack(side=LEFT, padx=5)
 save_button = Checkbutton(root, text="Save", command=toggle_save)
 save_button.pack(side=LEFT, padx=5)
 
+filename_label = tkinter.Label(root, text="Filename:")
+filename_label.pack(side=LEFT, padx=5)
+
+filename_entry = tkinter.Entry(root)
+filename_entry.pack(side=LEFT, padx=5)
+filename_entry.insert(0, "saved_data.txt")
+
 # Initialize the save flag
 save_flag = False
 
@@ -138,10 +162,17 @@ window_size_entry.pack(side=RIGHT, padx=5)
 window_size_entry.insert(END, "5")
 window_size_label = Label(root, text="Filter window Size:")
 window_size_label.pack(side=RIGHT, padx=5)
-
+"""
 moving_avg_var = IntVar()
 moving_avg_checkbox = Checkbutton(root, text="Moving Average", variable=moving_avg_var)
 moving_avg_checkbox.pack(side=RIGHT, padx=5)
+"""
+
+filter_type_var = StringVar()
+filter_type_var.set('None')
+filter_type_options = ['None', 'Moving Average', 'Moving Median']
+filter_type_combobox = ttk.Combobox(root, textvariable=filter_type_var, values=filter_type_options)
+filter_type_combobox.pack(side=RIGHT, padx=5)
 
 # Add labels to the x and y axes
 ax.set_xlabel('Time')

@@ -11,7 +11,7 @@ filename = 'sine_waves.txt'
 
 # Define global parameters for adding artificial noise
 add_noise = True  # Set to True to add noise, False to disable
-noise_amplitude = 0.1  # Amplitude of the noise
+noise_amplitude = 0.5  # Amplitude of the noise
 
 # Define the function to write the sine wave data to the file
 def write_sine_data(file):
